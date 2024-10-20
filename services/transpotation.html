@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Route Finder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #d32f2f;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .route-info {
+            padding: 20px;
+            background-color: #ffffff;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .route-info label {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .route-info input, .route-info select {
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .route-info button {
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+
+        .route-info button:hover {
+            background-color: #45a049;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .route-display {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e6f7ff;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        iframe {
+            border: 0;
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            width: 800px;
+            height: 600px;
+            margin-top: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Back button on the top left side -->
+    <button class="back-button" onclick="goBack()">Back</button>
+
+    <h1>Bus Route Finder</h1>
+
+    <div class="route-info">
+        <label for="source">Source:</label>
+        <input type="text" id="source" placeholder="Enter source location">
+        
+        <label for="destination">Destination:</label>
+        <input type="text" id="destination" placeholder="Enter destination">
+
+        <button onclick="generateBusRoutes()">Generate Bus Routes</button>
+
+        <label for="bus">Select Bus:</label>
+        <select id="bus">
+            <option value="" disabled selected>Select a bus</option>
+        </select>
+
+        <label for="arrivalTime">Time to Arrival (mins):</label>
+        <input type="number" id="arrivalTime" placeholder="Enter time in minutes">
+        
+        <button onclick="showRoute()">Show Route</button>
+        <button onclick="showBusInfo()">Show Bus Info</button>
+    </div>
+
+    <div class="route-display" id="routeDisplay">
+        <p id="routeText">Source: N/A, Destination: N/A, Bus: N/A, Location: N/A, Time to Arrival: N/A</p>
+    </div>
+
+    <iframe 
+        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d497511.2310658522!2d79.87933474107955!3d13.047985943115949!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a5265ea4f7d3361%3A0x6e61a70b6863d433!2sChennai%2C%20Tamil%20Nadu!5e0!3m2!1sen!2sin!4v1729367187963!5m2!1sen!2sin" 
+        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade">
+    </iframe>
+
+    <script>
+        // Predefined list of main places in Chennai
+        const chennaiLocations = [
+            "Central Railway Station", "Marina Beach", "T. Nagar", 
+            "Adyar", "Guindy", "Anna Nagar", "Tambaram", 
+            "Velachery", "Sholinganallur", "Besant Nagar"
+        ];
+
+        function getRandomLocation() {
+            // Pick a random location from the predefined list
+            const randomIndex = Math.floor(Math.random() * chennaiLocations.length);
+            return chennaiLocations[randomIndex];
+        }
+
+        function getRandomTime() {
+            // Random time between 5 and 30 minutes
+            return Math.floor(Math.random() * 26) + 5;
+        }
+
+        function generateBusRoutes() {
+            const source = document.getElementById("source").value;
+            const destination = document.getElementById("destination").value;
+            const busDropdown = document.getElementById("bus");
+
+            if (!source || !destination) {
+                alert("Please enter both source and destination.");
+                return;
+            }
+
+            // Clear previous options
+            busDropdown.innerHTML = '<option value="" disabled selected>Select a bus</option>';
+
+            // Generate random bus routes
+            for (let i = 1; i <= 3; i++) {
+                const busNo = "Bus " + (Math.floor(Math.random() * 900) + 100);
+                const currentLocation = getRandomLocation();
+                const timeToArrival = getRandomTime();
+
+                // Add bus option to dropdown
+                const option = document.createElement("option");
+                option.value = busNo + ": " + currentLocation + " → " + destination + " (Arrival: " + timeToArrival + " mins)";
+                option.text = busNo + " (Current Location: " + currentLocation + ", Arrival: " + timeToArrival + " mins)";
+                busDropdown.add(option);
+            }
+        }
+
+        function showRoute() {
+            var source = document.getElementById("source").value;
+            var destination = document.getElementById("destination").value;
+            var bus = document.getElementById("bus").value;
+            var arrivalTime = document.getElementById("arrivalTime").value;
+
+            var routeText = "Source: " + (source || "N/A") + ", Destination: " + (destination || "N/A") + 
+                            ", Bus: " + (bus || "N/A") + ", Time to Arrival: " + (arrivalTime || "N/A") + " mins";
+            document.getElementById("routeDisplay").innerHTML = "<p>" + routeText + "</p>";
+        }
+
+        function showBusInfo() {
+            var bus = document.getElementById("bus").value;
+            var arrivalTime = document.getElementById("arrivalTime").value;
+
+            if (bus) {
+                alert("Bus Info:\n" + bus + "\nTime to Arrival: " + (arrivalTime || "N/A") + " mins");
+            } else {
+                alert("Please select a bus.");
+            }
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+</body>
+</html>
